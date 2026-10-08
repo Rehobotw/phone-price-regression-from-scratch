@@ -91,7 +91,9 @@ def evaluate_model(
     if (weights is None) != (bias is None):
         raise ValueError("weights and bias must be provided together.")
     if weights is not None and bias is not None:
-        y_pred = np.dot(np.asarray(y_true), weights) + bias
+        X_test = np.asarray(y_true)
+        y_true = y_pred
+        y_pred = np.dot(X_test, weights) + bias
 
     values = {
         "mae": mean_absolute_error(y_true, y_pred),
