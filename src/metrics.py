@@ -75,17 +75,35 @@ def r2_score(
 def evaluate_model(
     y_true: Union[np.ndarray, pd.Series, list],
     y_pred: Union[np.ndarray, pd.Series, list],
+    weights: np.ndarray | None = None,
+    bias: float | None = None,
 ) -> Dict[str, float]:
-    """Calculate and return a dictionary of common regression metrics.
+    """Calculate common regression metrics.
+
+    With ``weights`` and ``bias``, ``y_true`` is treated as ``X_test`` and
+    predictions are generated using the notebook's scratch-model convention.
     
     Returns
     -------
     Dict[str, float]
         Dictionary with MAE, MSE, RMSE, and R2.
     """
+    if (weights is None) != (bias is None):
+        raise ValueError("weights and bias must be provided together.")
+    if weights is not None and bias is not None:
+        y_pred = np.dot(np.asarray(y_true), weights) + bias
+
+    values = {
+        "mae": mean_absolute_error(y_true, y_pred),
+        "mse": mean_squared_error(y_true, y_pred),
+        "rmse": root_mean_squared_error(y_true, y_pred),
+        "r2": r2_score(y_true, y_pred),
+    }
+    # Keep the original package's uppercase keys as backwards-compatible aliases.
     return {
-        "MAE": mean_absolute_error(y_true, y_pred),
-        "MSE": mean_squared_error(y_true, y_pred),
-        "RMSE": root_mean_squared_error(y_true, y_pred),
-        "R2": r2_score(y_true, y_pred),
+        **values,
+        "MAE": values["mae"],
+        "MSE": values["mse"],
+        "RMSE": values["rmse"],
+        "R2": values["r2"],
     }

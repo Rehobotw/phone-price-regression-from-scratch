@@ -1,12 +1,14 @@
 """Data preprocessing utilities implemented from scratch."""
 
+import random
+import re
 from typing import Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Perform initial cleaning on the raw mobile phone dataset.
+    """Clean and engineer features from the raw mobile phone dataset.
     
     Parameters
     ----------
@@ -19,14 +21,82 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         Cleaned dataframe.
     """
     df_clean = df.copy()
+    df_clean.columns = df_clean.columns.str.strip()
+
+    required = {
+        "Storage", "RAM", "Price ($)", "Screen Size (inches)",
+        "Camera (MP)", "Battery Capacity (mAh)",
+    }
+    missing = required.difference(df_clean.columns)
+    if missing:
+        raise ValueError(f"Missing required columns: {sorted(missing)}")
+
+    df_clean["Storage"] = _extract_numeric(df_clean["Storage"], integer=True)
+    df_clean["RAM"] = _extract_numeric(df_clean["RAM"], integer=True)
+    df_clean["Price ($)"] = (
+        df_clean["Price ($)"].astype(str).str.replace("$", "", regex=False)
+        .str.replace(",", "", regex=False).astype(int)
+    )
+    df_clean["Screen Size (inches)"] = _extract_numeric(
+        df_clean["Screen Size (inches)"], integer=False
+    )
+
+    lens_list = df_clean["Camera (MP)"].apply(parse_lenses)
+    if not lens_list.apply(bool).all():
+        raise ValueError("Some rows have no parsable camera values.")
+    camera_features = lens_list.apply(name_lenses)
+    df_clean = pd.concat([df_clean, camera_features], axis=1)
+    df_clean = df_clean.drop(columns=["Camera (MP)", "ambiguous"])
+    df_clean["Num_camera"] = df_clean["Num_camera"].astype(int)
     df_clean = df_clean.drop_duplicates()
-    
-    # Strip whitespace from string columns if present
-    string_cols = df_clean.select_dtypes(include=["object", "string"]).columns
-    for col in string_cols:
-        df_clean[col] = df_clean[col].astype(str).str.strip()
-        
-    return df_clean
+    df_clean = df_clean.rename(columns={
+        "Screen Size (inches)": "Screen_size",
+        "Battery Capacity (mAh)": "Battery_cap",
+        "Price ($)": "Price",
+    })
+
+    ordered_columns = [
+        "Brand", "Model", "Storage", "RAM", "Screen_size", "Num_camera",
+        "Cam_main", "Cam_ultra", "Cam_telephoto", "Cam_macro",
+        "Battery_cap", "Price",
+    ]
+    return df_clean[ordered_columns]
+
+
+def _extract_numeric(series: pd.Series, *, integer: bool) -> pd.Series:
+    pattern = r"(\d+)" if integer else r"(\d+\.?\d*)"
+    values = series.astype(str).str.extract(pattern, expand=False)
+    return values.astype(int if integer else float)
+
+
+def parse_lenses(value: object) -> list[float]:
+    """Extract camera megapixels, ignoring non-MP tokens such as ``ToF``."""
+    lenses: list[float] = []
+    for part in str(value).split("+"):
+        match = re.fullmatch(r"\s*(\d+\.?\d*)\s*(?:MP)?\s*", part, flags=re.I)
+        if match:
+            lenses.append(float(match.group(1)))
+    return lenses
+
+
+MACRO_MAX_MP = 5.0
+
+
+def name_lenses(lenses: list[float]) -> pd.Series:
+    """Map ordered camera resolutions to the engineered camera features."""
+    if not lenses:
+        raise ValueError("At least one camera resolution is required.")
+    secondary = lenses[1:]
+    macro = [value for value in secondary if value <= MACRO_MAX_MP]
+    wide_or_tele = [value for value in secondary if value > MACRO_MAX_MP]
+    return pd.Series({
+        "Num_camera": len(lenses),
+        "Cam_main": lenses[0],
+        "Cam_ultra": wide_or_tele[0] if wide_or_tele else 0.0,
+        "Cam_telephoto": wide_or_tele[1] if len(wide_or_tele) > 1 else 0.0,
+        "Cam_macro": macro[0] if macro else 0.0,
+        "ambiguous": len(wide_or_tele) >= 2,
+    })
 
 
 def train_test_split_custom(
@@ -55,21 +125,21 @@ def train_test_split_custom(
     -------
     X_train, X_test, y_train, y_test : Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
     """
+    if not 0 <= test_size <= 1:
+        raise ValueError("test_size must be between 0 and 1.")
     if isinstance(X, pd.DataFrame):
         X = X.to_numpy()
     if isinstance(y, (pd.Series, pd.DataFrame)):
         y = y.to_numpy()
-        
+
     n_samples = len(X)
     if len(y) != n_samples:
         raise ValueError("X and y must have the same number of samples.")
         
-    if random_state is not None:
-        np.random.seed(random_state)
-        
-    indices = np.arange(n_samples)
+    rng = random.Random(random_state)
+    indices = list(range(n_samples))
     if shuffle:
-        np.random.shuffle(indices)
+        rng.shuffle(indices)
         
     split_idx = int(n_samples * (1 - test_size))
     train_indices = indices[:split_idx]

@@ -41,7 +41,11 @@ class LinearRegressionGD:
         
         Cost = (1 / (2 * m)) * sum((y_pred - y) ** 2)
         """
+        if self.weights is None:
+            raise RuntimeError("Model parameters are not initialized.")
         m = len(y)
+        if m == 0:
+            raise ValueError("X and y must contain at least one sample.")
         predictions = np.dot(X, self.weights) + self.bias
         cost = (1.0 / (2.0 * m)) * np.sum((predictions - y) ** 2)
         return float(cost)
@@ -69,9 +73,15 @@ class LinearRegressionGD:
         if isinstance(y, (pd.Series, pd.DataFrame)):
             y = y.to_numpy().reshape(-1)
         else:
-            y = y.reshape(-1)
+            y = np.asarray(y).reshape(-1)
 
+        if X.ndim != 2:
+            raise ValueError("X must be a two-dimensional feature matrix.")
         n_samples, n_features = X.shape
+        if n_samples == 0 or len(y) == 0:
+            raise ValueError("X and y must contain at least one sample.")
+        if len(y) != n_samples:
+            raise ValueError("X and y must have the same number of samples.")
         self.weights = np.zeros(n_features)
         self.bias = 0.0
         self.cost_history = []
@@ -82,8 +92,9 @@ class LinearRegressionGD:
             errors = y_pred - y
 
             # Compute gradients
-            dw = (1.0 / n_samples) * np.dot(X.T, errors)
-            db = (1.0 / n_samples) * np.sum(errors) if self.fit_intercept else 0.0
+            # The notebook minimizes MSE, whose gradient includes the factor 2.
+            dw = (2.0 / n_samples) * np.dot(X.T, errors)
+            db = (2.0 / n_samples) * np.sum(errors) if self.fit_intercept else 0.0
 
             # Update parameters
             self.weights -= self.learning_rate * dw
@@ -117,6 +128,9 @@ class LinearRegressionGD:
             
         if isinstance(X, pd.DataFrame):
             X = X.to_numpy()
+        X = np.asarray(X)
+        if X.ndim != 2 or X.shape[1] != len(self.weights):
+            raise ValueError("X must have the same number of features used during fit.")
 
         return np.dot(X, self.weights) + self.bias
 
