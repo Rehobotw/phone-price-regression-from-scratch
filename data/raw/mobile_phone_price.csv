@@ -1,4 +1,4 @@
-Brand,Model,Storage,RAM,Screen Size (inches),Camera (MP),Battery Capacity (mAh),Price
+﻿Brand,Model,Storage ,RAM ,Screen Size (inches),Camera (MP),Battery Capacity (mAh),Price ($)
 Apple,iPhone 13 Pro,128 GB,6 GB,6.1,12 + 12 + 12,3095,999
 Samsung,Galaxy S21 Ultra,256 GB,12 GB,6.8,108 + 10 + 10 + 12,5000,1199
 OnePlus,9 Pro,128 GB,8 GB,6.7,48 + 50 + 8 + 2,4500,899
@@ -87,7 +87,7 @@ Oppo,Reno6 Pro+,256GB,12GB,6.55,50MP + 16MP + 13MP + 2MP,4500,$699
 Motorola,Edge 20 Pro,256GB,12GB,6.7,108MP + 16MP + 8MP,4500,$699 
 Nokia,XR20,128GB,6GB,6.67,48MP + 13MP,4630,$549 
 Sony,Xperia 5 III,128GB,8GB,6.1,12MP + 12MP + 12MP,4500,"$1,299 "
-LG,Wing,256GB,8GB,10.7,64MP + 13MP + 12MP,4000,$999 
+LG,Wing,256GB,8GB,6.8 + 3.9,64MP + 13MP + 12MP,4000,$999 
 Asus,Zenfone 8 Flip,256GB,8GB,6.67,64MP + 12MP + 8MP,5000,$899 
 Blackberry,KEY2 LE,64GB,4GB,4.5,13MP + 5MP,3000,$399 
 Samsung,Galaxy A72,128GB,6GB,6.7,64MP + 12MP + 8MP + 5MP,5000,$449 
@@ -372,7 +372,7 @@ Apple,iPhone 12 mini,256,4,5.4,12+12,2227,899
 Samsung,Galaxy A21s,128,6,6.5,48+8+2+2,5000,199
 OnePlus,9,128,8,6.55,48+50+2,4500,729
 Motorola,Moto G9 Power,128,4,6.8,64+2+2,6000,229
-Samsung,Galaxy Z Fold2 5G,256,12,7.6,12+12+12,4500,1999
+Samsung,Galaxy Z Fold2 5G,256,12,7.6 (unfolded),12+12+12,4500,1999
 Xiaomi,Mi 10T Pro 5G,128,8,6.67,108+13+5,5000,599
 Oppo,Reno4 Pro 5G,256,12,6.5,48+13+12+2,4000,799
 Huawei,P40 Pro,256,8,6.58,50+12+40+3D,4200,999
